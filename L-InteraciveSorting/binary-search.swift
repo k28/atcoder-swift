@@ -9,6 +9,7 @@ func debugPrint(_ msg: String) {
     }
 }
 
+var collectWords: [String] = ["A", "B", "C", "D", "E"]
 var askCount = 0
 /// a, b の大小を質問して結果を返す
 ///  return true a > b, false a < b
@@ -20,7 +21,8 @@ func askQuestion(_ a:String, _ b:String) -> Bool {
         let ans = readLine()!
         return ans == ">" ? true : false
     } else {
-        return a > b
+        return collectWords.firstIndex(of: a) ?? 0 > collectWords.firstIndex(of: b) ?? 0
+        //return a > b
     }
 
 }
@@ -86,7 +88,8 @@ func searchInputPosition(_ word: String, _ list: [String],
     }
 }
 
-func checkWords(n: Int, q: Int, randomWords: [String]) -> [String] {
+/// 2分探索でソートを行う
+func checkWords(randomWords: [String]) -> [String] {
     var sorted: [String] = []
 
     for word in randomWords {
@@ -102,6 +105,72 @@ func checkWords(n: Int, q: Int, randomWords: [String]) -> [String] {
 
         sorted.insert(word, at: index)
     }
+
+    return sorted
+}
+
+/// n=5の時にソートを行う特別処理
+func n5() -> [String] {
+    var sorted: [String] = []
+    var ab: [String] = []
+    let a = "A"
+    let b = "B"
+    let c = "C"
+    let d = "D"
+    let e = "E"
+    if askQuestion(a, b) {
+        ab.append(b)
+        ab.append(a)
+    } else {
+        ab.append(a)
+        ab.append(b)
+    }
+
+    var cd: [String] = []
+    if askQuestion(c, d) {
+        cd.append(d)
+        cd.append(c)
+    } else {
+        cd.append(c)
+        cd.append(d)
+    }
+
+    var x1: String = ""
+    var x2: String = ""
+    if askQuestion(ab[0], cd[0]) {
+        // cdの方が小さい
+        sorted.append(cd[0])
+        sorted.append(contentsOf: ab)
+        x1 = cd[0]
+        x2 = cd[1]
+    } else {
+        // abの方が小さい
+        sorted.append(ab[0])
+        sorted.append(contentsOf: cd)
+        x1 = ab[0]
+        x2 = ab[1]
+    }
+
+    // eの場所を特定する
+    repeat {
+        let candidates = Array(0..<sorted.count)
+        var history: [(Int, Bool)] = []
+        let eIndex = searchInputPosition(e, sorted, candidates, &history)
+        sorted.insert(e, at: eIndex)
+    } while false
+
+    // xの場所を特定する => 
+    repeat {
+        var candidates = Array(0..<sorted.count)
+        // x1のindexより前は不要なので削除する
+        let x1Index = sorted.firstIndex(of: x1)!
+        candidates = candidates.filter{$0 > x1Index}
+
+        debugPrint("x1:\(x1) x2:\(x2)  candidates \(candidates), sorted \(sorted), ans: \(collectWords)")
+        var history: [(Int, Bool)] = [(x1Index, true)]
+        let eIndex = searchInputPosition(x2, sorted, candidates, &history)
+        sorted.insert(x2, at: eIndex)
+    } while false
 
     return sorted
 }
@@ -123,15 +192,17 @@ for i in 0..<n {
     words.append(s)
 }
 
-
 /*
+// テスト用
 for _ in 0..<100 {
     //let words = ["A", "B", "C", "D", "E", "F", "G", "H", "I"]
     let words = ["A", "B", "C", "D", "E"]
     let random = words.shuffled()
     
     askCount = 0
-    if words != checkWords(n: words.count, q: 100, randomWords:random) {
+    collectWords = random
+    //if collectWords != checkWords(randomWords: words) {
+    if collectWords != n5() {
         print("ERROR: \(random)")
     } else {
         print("OK: \(random) \(askCount)")
@@ -140,8 +211,12 @@ for _ in 0..<100 {
 */
 
 // 質問フェーズ
-// let sortedList = checkWords(n: n, q: q, randomWords: ["E", "F", "A", "B", "H", "I", "C", "D", "G"])
-let sortedList = checkWords(n: n, q: q, randomWords: words)
+var sortedList: [String] = []
+if n == 5 {
+    sortedList = n5()
+} else {
+    sortedList = checkWords(randomWords: words)
+}
 print("! \(sortedList.joined(separator:""))")
 fflush(stdout)
 
